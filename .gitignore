@@ -23,3 +23,9 @@ __pycache__/
 *.compiled.js
 package-lock.json
 
+
+# OpenCouncil local secrets and build files
+.env.local
+**/.env.local
+.venv/
+*.tsbuildinfo
