@@ -106,6 +106,9 @@ export default function HomePage() {
   const [votingId, setVotingId] = useState<string | null>(null);
   const [voteMessage, setVoteMessage] = useState("");
   const [voteError, setVoteError] = useState("");
+  const [finalizingId, setFinalizingId] = useState<string | null>(null);
+  const [finalizeMessage, setFinalizeMessage] = useState("");
+  const [finalizeError, setFinalizeError] = useState("");
 
   const tabs = ["Overview", "Proposals", "Governance Rules", "History"];
 
@@ -301,6 +304,39 @@ export default function HomePage() {
       );
     } finally {
       setVotingId(null);
+    }
+  }
+
+  async function handleFinalizeProposal(proposal: any) {
+    const proposalId = getProposalId(proposal);
+    setFinalizeError("");
+    setFinalizeMessage("");
+
+    if (!proposalId) {
+      setFinalizeError("This proposal has no readable ID.");
+      return;
+    }
+    if (!wallet.isConnected || !address) {
+      setFinalizeError("Connect your wallet before finalizing.");
+      return;
+    }
+    if (!wallet.isOnCorrectNetwork) {
+      setFinalizeError("Switch your wallet to GenLayer Studio before finalizing.");
+      return;
+    }
+
+    try {
+      setFinalizingId(proposalId);
+      setFinalizeMessage("Submitting finalization to GenLayer. The contract will verify that voting has ended.");
+      const contract = new OpenCouncil(address);
+      await contract.finalizeProposal(proposalId);
+      await refreshContractData();
+      setFinalizeMessage("Finalization completed. The recorded outcome is available in Decision History.");
+    } catch (err: any) {
+      setFinalizeMessage("");
+      setFinalizeError(err?.message || "Finalization failed. The voting period may not have ended.");
+    } finally {
+      setFinalizingId(null);
     }
   }
 
@@ -752,9 +788,23 @@ export default function HomePage() {
                               </button>
                             </div>
 
+                            <div className="mt-4 border-t border-white/10 pt-4">
+                              <p className="mb-3 text-xs leading-5 text-muted-foreground">
+                                After the voting deadline, submit finalization to record the result using this proposal&apos;s snapshotted quorum and approval threshold. The contract enforces the deadline.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleFinalizeProposal(proposal)}
+                                disabled={finalizingId !== null || !wallet.isConnected || !wallet.isOnCorrectNetwork}
+                                className="rounded-lg border border-accent/50 px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {finalizingId === proposalId ? "Finalizing on GenLayer..." : "Finalize Proposal"}
+                              </button>
+                            </div>
+
                             {!wallet.isConnected && (
                               <p className="mt-3 text-xs text-muted-foreground">
-                                Connect your wallet to vote.
+                                Connect your wallet to vote or finalize.
                               </p>
                             )}
 
@@ -800,6 +850,16 @@ export default function HomePage() {
               {voteError && (
                 <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
                   {voteError}
+                </p>
+              )}
+              {finalizeMessage && (
+                <p className="mt-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-400">
+                  {finalizeMessage}
+                </p>
+              )}
+              {finalizeError && (
+                <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+                  {finalizeError}
                 </p>
               )}
             </div>
