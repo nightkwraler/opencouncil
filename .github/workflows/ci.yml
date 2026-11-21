@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2-dev]
   pull_request:
     branches: [main]
 
@@ -28,3 +28,17 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: pytest tests/direct/ -v
+
+  frontend:
+    name: Frontend Type Check and Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
