@@ -21,6 +21,10 @@ class Proposal:
     rationale: str
     proposal_hash: str
     rules_version: u256
+    rules_snapshot: str
+    quorum_snapshot: u256
+    approval_threshold_snapshot: u256
+    voting_duration_snapshot: u256
     eligibility: str
     assessment_json: str
     status: str
@@ -139,6 +143,10 @@ class OpenCouncil(gl.Contract):
             rationale=rationale,
             proposal_hash=proposal_hash,
             rules_version=self.rules_version,
+            rules_snapshot=self.rules,
+            quorum_snapshot=self.quorum,
+            approval_threshold_snapshot=self.approval_threshold,
+            voting_duration_snapshot=self.voting_duration,
             eligibility="pending",
             assessment_json="",
             status="submitted",
@@ -161,8 +169,9 @@ class OpenCouncil(gl.Contract):
         if proposal.status != "submitted":
             raise gl.vm.UserError("Proposal has already been assessed")
 
-        rules_text = self.rules
-        rules_version = int(self.rules_version)
+        # Use the governance conditions captured at proposal submission.
+        rules_text = proposal.rules_snapshot
+        rules_version = int(proposal.rules_version)
         title = proposal.title
         description = proposal.description
         rationale = proposal.rationale
@@ -259,12 +268,10 @@ Do not create requirements that are absent from the rules.
 
         proposal.eligibility = result["eligibility"]
         proposal.assessment_json = json.dumps(result, sort_keys=True)
-        proposal.rules_version = self.rules_version
-
         if result["eligibility"] == "eligible":
             proposal.status = "open"
             proposal.voting_deadline = u256(
-                int(self._now()) + int(self.voting_duration)
+                int(self._now()) + int(proposal.voting_duration_snapshot)
             )
         elif result["eligibility"] == "ineligible":
             proposal.status = "ineligible"
@@ -317,12 +324,12 @@ Do not create requirements that are absent from the rules.
 
         total_votes = int(proposal.yes_votes) + int(proposal.no_votes)
 
-        if total_votes < int(self.quorum):
+        if total_votes < int(proposal.quorum_snapshot):
             proposal.status = "failed_quorum"
         else:
             approval = (
                 int(proposal.yes_votes) * 100
-                >= total_votes * int(self.approval_threshold)
+                >= total_votes * int(proposal.approval_threshold_snapshot)
             )
             proposal.status = "passed" if approval else "rejected"
 
