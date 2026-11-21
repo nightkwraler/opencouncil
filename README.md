@@ -1,4 +1,4 @@
-# Sample GenLayer project
+# OpenCouncil
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/license/mit/)
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/8Jm4v89VAu)
 [![Telegram](https://img.shields.io/badge/Telegram--T.svg?style=social&logo=telegram)](https://t.me/genlayer)
@@ -11,7 +11,6 @@ OpenCouncil is a GenLayer-powered community governance application. Members subm
 ## What's included
 - An OpenCouncil intelligent contract with proposal assessment, on-chain voting, and immutable per-proposal governance snapshots
 - **Direct mode tests** — fast, in-memory unit tests with web/LLM mocking (~ms per test)
-- **Integration tests** — full end-to-end tests against GenLayer Studio
 - **Contract linting** — static analysis to catch common contract issues before deployment
 - **CI pipeline** — GitHub Actions workflow for linting and direct tests
 - A production-ready Next.js 15 frontend with TypeScript, TanStack Query, and Radix UI
@@ -20,7 +19,7 @@ OpenCouncil is a GenLayer-powered community governance application. Members subm
 ## Requirements
 - Python >= 3.12
 - [GenLayer CLI](https://github.com/genlayerlabs/genlayer-cli) globally installed: `npm install -g genlayer`
-- GenLayer Studio (for integration tests and deployment): Install from [Docs](https://docs.genlayer.com/developers/intelligent-contracts/tooling-setup#using-the-genlayer-studio) or use the hosted [GenLayer Studio](https://studio.genlayer.com/)
+- GenLayer Studio (for deployment and manual end-to-end verification): Install from [Docs](https://docs.genlayer.com/developers/intelligent-contracts/tooling-setup#using-the-genlayer-studio) or use the hosted [GenLayer Studio](https://studio.genlayer.com/)
 
 ## Project Structure
 
@@ -29,9 +28,6 @@ contracts/              # Python intelligent contracts
 tests/
   direct/               # Fast in-memory tests (no Studio required)
     test_opencouncil.py  # Proposal submission and governance snapshot tests
-  integration/           # Full tests against GenLayer Studio
-    test_opencouncil.py
-    fixtures.py          # Expected state fixtures
 frontend/               # Next.js 15 app (TypeScript, TanStack Query, Radix UI)
 deploy/                 # TypeScript deployment scripts
 gltest.config.yaml      # Test runner network configuration
