@@ -91,17 +91,7 @@ Set these environment variables in the shell used to run the GenLayer CLI, using
 
 Then choose the network with `genlayer network` and run `genlayer deploy`. The deployment script deploys `contracts/opencouncil.py` and passes all four constructor arguments.
 
-### 5. Run integration tests
-
-Integration tests deploy the contract to GenLayer Studio and test with real consensus:
-
-```shell
-gltest tests/integration/ -v -s
-```
-
-These require GenLayer Studio running (local or hosted).
-
-### 6. Set up the frontend
+### 5. Set up the frontend
 
 1. Copy `frontend/.env.example` to `frontend/.env`
 2. Add your deployed contract address as `NEXT_PUBLIC_CONTRACT_ADDRESS`
@@ -126,14 +116,13 @@ The app will be available at http://localhost:3000/.
 
 | Test Type | Command | Speed | Requires Studio |
 |-----------|---------|-------|-----------------|
-| **Lint** | `genvm-lint check contracts/*.py` | ~250ms | No |
+| **Lint** | `genvm-lint check contracts/opencouncil.py` | ~250ms | No |
 | **Direct** | `pytest tests/direct/ -v` | ~ms/test | No |
-| **Integration** | `gltest tests/integration/ -v -s` | ~min/test | Yes |
 
 **Recommended workflow:**
 1. Lint after every contract change
 2. Run direct tests frequently during development
-3. Run integration tests before deployment to verify consensus behavior
+3. Verify submission, assessment, voting, and finalization in GenLayer Studio before production use
 
 For AI coding agents (Claude Code, Cursor, etc.), the linter and direct tests provide the fast feedback loop needed for iterative development without requiring a running Studio instance.
 
