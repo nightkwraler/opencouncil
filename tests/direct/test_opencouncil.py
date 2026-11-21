@@ -1,5 +1,5 @@
 def test_submit_proposal(direct_vm, direct_deploy, direct_alice):
-    contract = direct_deploy("contracts/opencouncil.py")
+    contract = direct_deploy("contracts/opencouncil.py", "Members must follow the published governance rules.", 2, 60, 86400)
     direct_vm.sender = direct_alice
 
     proposal_id = contract.submit_proposal(
