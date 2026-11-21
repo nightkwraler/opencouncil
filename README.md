@@ -6,10 +6,10 @@
 [![GitHub star chart](https://img.shields.io/github/stars/yeagerai/genlayer-project-boilerplate?style=social)](https://star-history.com/#yeagerai/genlayer-js)
 
 ## About
-This project includes the boilerplate code for a GenLayer use case implementation, specifically a football bets game.
+OpenCouncil is a GenLayer-powered community governance application. Members submit proposals, GenLayer assesses them against governance rules, members vote, and anyone can finalize an expired vote to record its outcome.
 
 ## What's included
-- An example intelligent contract (Football Bets) with web access and LLM integration
+- An OpenCouncil intelligent contract with proposal assessment, on-chain voting, and immutable per-proposal governance snapshots
 - **Direct mode tests** — fast, in-memory unit tests with web/LLM mocking (~ms per test)
 - **Integration tests** — full end-to-end tests against GenLayer Studio
 - **Contract linting** — static analysis to catch common contract issues before deployment
@@ -28,11 +28,9 @@ This project includes the boilerplate code for a GenLayer use case implementatio
 contracts/              # Python intelligent contracts
 tests/
   direct/               # Fast in-memory tests (no Studio required)
-    test_create_bet.py   # Bet creation logic
-    test_resolve_bet.py  # Bet resolution with web/LLM mocks
-    test_views.py        # Read-only view methods
+    test_opencouncil.py  # Proposal submission and governance snapshot tests
   integration/           # Full tests against GenLayer Studio
-    test_football_bets.py
+    test_opencouncil.py
     fixtures.py          # Expected state fixtures
 frontend/               # Next.js 15 app (TypeScript, TanStack Query, Radix UI)
 deploy/                 # TypeScript deployment scripts
@@ -56,7 +54,7 @@ pip install -r requirements.txt
 Run the GenVM linter to catch issues before deployment:
 
 ```shell
-genvm-lint check contracts/football_bets.py
+genvm-lint check contracts/opencouncil.py
 ```
 
 The linter catches:
@@ -82,10 +80,16 @@ Direct mode features used in these tests:
 - `direct_vm.expect_revert("message")` — assert expected failures
 - `direct_vm.clear_mocks()` — reset mocks between calls
 
-### 4. Deploy the contract
+### 4. Configure and deploy OpenCouncil
 
-1. Choose your network: `genlayer network`
-2. Deploy: `genlayer deploy` (runs the script in `/deploy/deployScript.ts`)
+Set these environment variables in the shell used to run the GenLayer CLI, using the council's agreed policy (not placeholder text):
+
+- `OPENCOUNCIL_INITIAL_RULES`: complete governance rules text
+- `OPENCOUNCIL_INITIAL_QUORUM`: minimum number of votes
+- `OPENCOUNCIL_INITIAL_APPROVAL_THRESHOLD`: approval percentage from 1 to 100
+- `OPENCOUNCIL_INITIAL_VOTING_DURATION`: voting duration in seconds
+
+Then choose the network with `genlayer network` and run `genlayer deploy`. The deployment script deploys `contracts/opencouncil.py` and passes all four constructor arguments.
 
 ### 5. Run integration tests
 
@@ -111,11 +115,12 @@ npm run dev
 
 The app will be available at http://localhost:3000/.
 
-## How the Football Bets Contract Works
+## How OpenCouncil Works
 
-1. **Creating Bets**: Users bet on a football match by providing the game date, teams, and predicted winner.
-2. **Resolving Bets**: After the match, the contract fetches results from BBC Sport, uses an LLM to extract the score, and validates via the equivalence principle.
-3. **Points**: Correct predictions earn points. Users can query their points or the leaderboard.
+1. **Submit**: A member submits a proposal. The contract snapshots the current rules, rules version, quorum, approval threshold, and voting duration.
+2. **Assess**: GenLayer assesses the proposal against its snapshotted rules, so later administrator updates cannot change its governing conditions.
+3. **Vote**: Eligible proposals enter an on-chain voting period. Each address may vote once.
+4. **Finalize**: After the deadline, anyone may call `finalize_proposal`; the contract records `passed`, `rejected`, or `failed_quorum` using the proposal's snapshotted thresholds.
 
 ## Testing Strategy
 
