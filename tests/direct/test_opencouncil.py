@@ -18,10 +18,9 @@ def test_submit_proposal(direct_vm, direct_deploy, direct_alice):
     assert proposal.yes_votes == 0
     assert proposal.no_votes == 0
 
-    council = contract.get_council()
-    assert proposal.rules_version == council["rules_version"]
-    assert proposal.rules_snapshot == council["rules"]
-    assert proposal.quorum_snapshot == council["quorum"]
-    assert proposal.approval_threshold_snapshot == council["approval_threshold"]
-    assert proposal.voting_duration_snapshot == council["voting_duration"]
+    assert proposal.rules_version == 1
+    assert proposal.rules_snapshot == "Members must follow the published governance rules."
+    assert proposal.quorum_snapshot == 2
+    assert proposal.approval_threshold_snapshot == 60
+    assert proposal.voting_duration_snapshot == 86400
 
