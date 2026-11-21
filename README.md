@@ -62,7 +62,7 @@ The linter catches:
 
 ### 3. Run direct mode tests
 
-Direct mode tests run contracts in-memory without needing GenLayer Studio. They use mocks for web requests and LLM calls, giving you fast feedback (~milliseconds per test):
+Direct mode tests run the OpenCouncil contract in-memory without needing GenLayer Studio, including assertions that proposal governance values are captured at submission: 
 
 ```shell
 pytest tests/direct/ -v
