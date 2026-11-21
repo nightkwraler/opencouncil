@@ -1,4 +1,4 @@
-# Sample GenLayer project
+# OpenCouncil
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/license/mit/)
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/8Jm4v89VAu)
 [![Telegram](https://img.shields.io/badge/Telegram--T.svg?style=social&logo=telegram)](https://t.me/genlayer)
@@ -6,12 +6,11 @@
 [![GitHub star chart](https://img.shields.io/github/stars/yeagerai/genlayer-project-boilerplate?style=social)](https://star-history.com/#yeagerai/genlayer-js)
 
 ## About
-This project includes the boilerplate code for a GenLayer use case implementation, specifically a football bets game.
+OpenCouncil is a GenLayer-powered community governance application. Members submit proposals, GenLayer assesses them against governance rules, members vote, and anyone can finalize an expired vote to record its outcome.
 
 ## What's included
-- An example intelligent contract (Football Bets) with web access and LLM integration
+- An OpenCouncil intelligent contract with proposal assessment, on-chain voting, and immutable per-proposal governance snapshots
 - **Direct mode tests** — fast, in-memory unit tests with web/LLM mocking (~ms per test)
-- **Integration tests** — full end-to-end tests against GenLayer Studio
 - **Contract linting** — static analysis to catch common contract issues before deployment
 - **CI pipeline** — GitHub Actions workflow for linting and direct tests
 - A production-ready Next.js 15 frontend with TypeScript, TanStack Query, and Radix UI
@@ -20,7 +19,7 @@ This project includes the boilerplate code for a GenLayer use case implementatio
 ## Requirements
 - Python >= 3.12
 - [GenLayer CLI](https://github.com/genlayerlabs/genlayer-cli) globally installed: `npm install -g genlayer`
-- GenLayer Studio (for integration tests and deployment): Install from [Docs](https://docs.genlayer.com/developers/intelligent-contracts/tooling-setup#using-the-genlayer-studio) or use the hosted [GenLayer Studio](https://studio.genlayer.com/)
+- GenLayer Studio (for deployment and manual end-to-end verification): Install from [Docs](https://docs.genlayer.com/developers/intelligent-contracts/tooling-setup#using-the-genlayer-studio) or use the hosted [GenLayer Studio](https://studio.genlayer.com/)
 
 ## Project Structure
 
@@ -28,12 +27,7 @@ This project includes the boilerplate code for a GenLayer use case implementatio
 contracts/              # Python intelligent contracts
 tests/
   direct/               # Fast in-memory tests (no Studio required)
-    test_create_bet.py   # Bet creation logic
-    test_resolve_bet.py  # Bet resolution with web/LLM mocks
-    test_views.py        # Read-only view methods
-  integration/           # Full tests against GenLayer Studio
-    test_football_bets.py
-    fixtures.py          # Expected state fixtures
+    test_opencouncil.py  # Proposal submission and governance snapshot tests
 frontend/               # Next.js 15 app (TypeScript, TanStack Query, Radix UI)
 deploy/                 # TypeScript deployment scripts
 gltest.config.yaml      # Test runner network configuration
@@ -56,7 +50,7 @@ pip install -r requirements.txt
 Run the GenVM linter to catch issues before deployment:
 
 ```shell
-genvm-lint check contracts/football_bets.py
+genvm-lint check contracts/opencouncil.py
 ```
 
 The linter catches:
@@ -68,7 +62,7 @@ The linter catches:
 
 ### 3. Run direct mode tests
 
-Direct mode tests run contracts in-memory without needing GenLayer Studio. They use mocks for web requests and LLM calls, giving you fast feedback (~milliseconds per test):
+Direct mode tests run the OpenCouncil contract in-memory without needing GenLayer Studio, including assertions that proposal governance values are captured at submission: 
 
 ```shell
 pytest tests/direct/ -v
@@ -82,22 +76,18 @@ Direct mode features used in these tests:
 - `direct_vm.expect_revert("message")` — assert expected failures
 - `direct_vm.clear_mocks()` — reset mocks between calls
 
-### 4. Deploy the contract
+### 4. Configure and deploy OpenCouncil
 
-1. Choose your network: `genlayer network`
-2. Deploy: `genlayer deploy` (runs the script in `/deploy/deployScript.ts`)
+Set these environment variables in the shell used to run the GenLayer CLI, using the council's agreed policy (not placeholder text):
 
-### 5. Run integration tests
+- `OPENCOUNCIL_INITIAL_RULES`: complete governance rules text
+- `OPENCOUNCIL_INITIAL_QUORUM`: minimum number of votes
+- `OPENCOUNCIL_INITIAL_APPROVAL_THRESHOLD`: approval percentage from 1 to 100
+- `OPENCOUNCIL_INITIAL_VOTING_DURATION`: voting duration in seconds
 
-Integration tests deploy the contract to GenLayer Studio and test with real consensus:
+Then choose the network with `genlayer network` and run `genlayer deploy`. The deployment script deploys `contracts/opencouncil.py` and passes all four constructor arguments.
 
-```shell
-gltest tests/integration/ -v -s
-```
-
-These require GenLayer Studio running (local or hosted).
-
-### 6. Set up the frontend
+### 5. Set up the frontend
 
 1. Copy `frontend/.env.example` to `frontend/.env`
 2. Add your deployed contract address as `NEXT_PUBLIC_CONTRACT_ADDRESS`
@@ -111,24 +101,24 @@ npm run dev
 
 The app will be available at http://localhost:3000/.
 
-## How the Football Bets Contract Works
+## How OpenCouncil Works
 
-1. **Creating Bets**: Users bet on a football match by providing the game date, teams, and predicted winner.
-2. **Resolving Bets**: After the match, the contract fetches results from BBC Sport, uses an LLM to extract the score, and validates via the equivalence principle.
-3. **Points**: Correct predictions earn points. Users can query their points or the leaderboard.
+1. **Submit**: A member submits a proposal. The contract snapshots the current rules, rules version, quorum, approval threshold, and voting duration.
+2. **Assess**: GenLayer assesses the proposal against its snapshotted rules, so later administrator updates cannot change its governing conditions.
+3. **Vote**: Eligible proposals enter an on-chain voting period. Each address may vote once.
+4. **Finalize**: After the deadline, anyone may call `finalize_proposal`; the contract records `passed`, `rejected`, or `failed_quorum` using the proposal's snapshotted thresholds.
 
 ## Testing Strategy
 
 | Test Type | Command | Speed | Requires Studio |
 |-----------|---------|-------|-----------------|
-| **Lint** | `genvm-lint check contracts/*.py` | ~250ms | No |
+| **Lint** | `genvm-lint check contracts/opencouncil.py` | ~250ms | No |
 | **Direct** | `pytest tests/direct/ -v` | ~ms/test | No |
-| **Integration** | `gltest tests/integration/ -v -s` | ~min/test | Yes |
 
 **Recommended workflow:**
 1. Lint after every contract change
 2. Run direct tests frequently during development
-3. Run integration tests before deployment to verify consensus behavior
+3. Verify submission, assessment, voting, and finalization in GenLayer Studio before production use
 
 For AI coding agents (Claude Code, Cursor, etc.), the linter and direct tests provide the fast feedback loop needed for iterative development without requiring a running Studio instance.
 
