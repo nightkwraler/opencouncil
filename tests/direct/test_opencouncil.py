@@ -1,4 +1,5 @@
-def test_submit_proposal(direct_vm, direct_deploy, direct_alice):
+def test_submit_proposal(direct_vm, direct_deploy, direct_alice, direct_owner):
+    direct_vm.sender = direct_owner
     contract = direct_deploy("contracts/opencouncil.py", "Members must follow the published governance rules.", 2, 60, 86400)
     direct_vm.sender = direct_alice
 
@@ -23,4 +24,17 @@ def test_submit_proposal(direct_vm, direct_deploy, direct_alice):
     assert proposal.quorum_snapshot == 2
     assert proposal.approval_threshold_snapshot == 60
     assert proposal.voting_duration_snapshot == 86400
+
+    # The admin may change current council settings, but this proposal keeps
+    # the rules and thresholds that were fixed at submission.
+    direct_vm.sender = direct_owner
+    contract.update_rules("Updated council rules")
+    contract.update_council_settings(9, 90, 172800)
+
+    updated_proposal = contract.get_proposal(proposal_id)
+    assert updated_proposal.rules_version == 1
+    assert updated_proposal.rules_snapshot == "Members must follow the published governance rules."
+    assert updated_proposal.quorum_snapshot == 2
+    assert updated_proposal.approval_threshold_snapshot == 60
+    assert updated_proposal.voting_duration_snapshot == 86400
 
